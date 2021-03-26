@@ -19,7 +19,7 @@ COPY ./ ./
 
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build \
     -ldflags="-w -s" -installsuffix 'static' \
-    -o /api-server cmd/fetcher/main.go
+    -o /fetcher cmd/fetcher/main.go
 
 # Final stage: running container
 FROM scratch AS final
