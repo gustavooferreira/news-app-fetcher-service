@@ -2,4 +2,7 @@ module github.com/gustavooferreira/news-app-fetcher-service
 
 go 1.16
 
-require go.uber.org/zap v1.16.0
+require (
+	github.com/mmcdole/gofeed v1.1.0
+	go.uber.org/zap v1.16.0
+)

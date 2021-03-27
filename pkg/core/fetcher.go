@@ -2,9 +2,13 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/gustavooferreira/news-app-fetcher-service/pkg/clients/artmgmt"
+	"github.com/gustavooferreira/news-app-fetcher-service/pkg/clients/feedmgmt"
 	"github.com/gustavooferreira/news-app-fetcher-service/pkg/core/log"
+	"github.com/mmcdole/gofeed"
 )
 
 type Fetcher struct {
@@ -66,12 +70,58 @@ func (f *Fetcher) WorkerRun() {
 	start := time.Now()
 
 	// Get list of RSS feed URLs
+	feeds, err := f.FeedClient.GetFeeds("", "", true)
+	if err != nil {
+		f.Logger.Error(fmt.Sprintf("error while sending request to feeds mgmt service: %s", err.Error()))
+		return
+	}
 
-	// Fetch all of them in parallel
+	// We'll fetch each feed one at a time, but we could have done this in parallel
+	f.Logger.Info(fmt.Sprintf("%+v", feeds))
+	for _, feed := range feeds {
+		articles, err := FetchUpdates(feed)
 
-	// Send all of the results to articles mgmt API
+		err = f.ArticlesClient.AddArticles(articles)
+		if err != nil {
+			f.Logger.Error(fmt.Sprintf("error while sending request to articles mgmt service: %s", err.Error()))
+			return
+		}
+	}
 
 	end := time.Now()
 	fetchDuration := end.Sub(start)
 	f.Logger.Info("fetching cycle ending", log.Field("duration", fetchDuration.String()))
+}
+
+func FetchUpdates(feed feedmgmt.Feed) (articles artmgmt.Articles, err error) {
+	fp := gofeed.NewParser()
+	feedResult, err := fp.ParseURL(feed.URL)
+	if err != nil {
+		return articles, err
+	}
+
+	if feedResult.Items == nil || len(feedResult.Items) == 0 {
+		return artmgmt.Articles{}, nil
+	}
+
+	articles = make(artmgmt.Articles, 0, len(feedResult.Items))
+
+	for _, item := range feedResult.Items {
+		article := artmgmt.Article{
+			GUID:        item.GUID,
+			Title:       item.Title,
+			Description: item.Description,
+			Link:        item.Link,
+			Provider:    feed.Provider,
+			Category:    feed.Category,
+		}
+
+		if item.PublishedParsed != nil {
+			article.PublishedTime = *item.PublishedParsed
+		}
+
+		articles = append(articles, article)
+	}
+
+	return articles, nil
 }
