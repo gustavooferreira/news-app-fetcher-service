@@ -8,18 +8,22 @@ import (
 )
 
 type Fetcher struct {
-	Logger log.Logger
+	Logger         log.Logger
+	FeedClient     FeedsClient
+	ArticlesClient ArticlesClient
 
 	WaitPeriod time.Duration
 	quitChan   chan chan struct{}
 }
 
-func NewFetcher(logger log.Logger, waitPeriod int) *Fetcher {
+func NewFetcher(logger log.Logger, feedsC FeedsClient, articlesC ArticlesClient, waitPeriod int) *Fetcher {
 	quitChan := make(chan chan struct{}, 1)
 	fetcher := &Fetcher{
-		Logger:     logger,
-		WaitPeriod: time.Duration(waitPeriod) * time.Second,
-		quitChan:   quitChan,
+		Logger:         logger,
+		FeedClient:     feedsC,
+		ArticlesClient: articlesC,
+		WaitPeriod:     time.Duration(waitPeriod) * time.Second,
+		quitChan:       quitChan,
 	}
 	return fetcher
 }

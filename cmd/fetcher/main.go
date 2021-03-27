@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
+	"time"
 
+	"github.com/gustavooferreira/news-app-fetcher-service/pkg/clients/artmgmt"
+	"github.com/gustavooferreira/news-app-fetcher-service/pkg/clients/feedmgmt"
 	"github.com/gustavooferreira/news-app-fetcher-service/pkg/core"
 	"github.com/gustavooferreira/news-app-fetcher-service/pkg/core/lifecycle"
 	"github.com/gustavooferreira/news-app-fetcher-service/pkg/core/log"
@@ -33,8 +37,15 @@ func mainLogic() int {
 	// something like this:
 	// logger.SetLevel(config.Options.LogLevel)
 
+	httpClient := &http.Client{
+		Timeout: time.Second * time.Duration(config.Options.HTTPClientTimeout),
+	}
+
+	feedClient := feedmgmt.NewClient(config.FeedsMgmtService.Host, config.FeedsMgmtService.Port, httpClient)
+	articleClient := artmgmt.NewClient(config.ArticlesMgmtService.Host, config.FeedsMgmtService.Port, httpClient)
+
 	// Setup fetcher
-	fetcher := core.NewFetcher(logger, config.Options.CyclePeriod)
+	fetcher := core.NewFetcher(logger, feedClient, articleClient, config.Options.CyclePeriod)
 
 	// Spawn SIGINT/SIGTERM listener
 	go lifecycle.TerminateHandler(logger, fetcher)
