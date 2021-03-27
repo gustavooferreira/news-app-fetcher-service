@@ -77,7 +77,6 @@ func (f *Fetcher) WorkerRun() {
 	}
 
 	// We'll fetch each feed one at a time, but we could have done this in parallel
-	f.Logger.Info(fmt.Sprintf("%+v", feeds))
 	for _, feed := range feeds {
 		articles, err := FetchUpdates(feed)
 
