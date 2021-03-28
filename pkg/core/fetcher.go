@@ -15,6 +15,7 @@ type Fetcher struct {
 	Logger         log.Logger
 	FeedClient     FeedsClient
 	ArticlesClient ArticlesClient
+	RSSParser      *gofeed.Parser
 
 	WaitPeriod time.Duration
 	quitChan   chan chan struct{}
@@ -26,9 +27,11 @@ func NewFetcher(logger log.Logger, feedsC FeedsClient, articlesC ArticlesClient,
 		Logger:         logger,
 		FeedClient:     feedsC,
 		ArticlesClient: articlesC,
+		RSSParser:      gofeed.NewParser(),
 		WaitPeriod:     time.Duration(waitPeriod) * time.Second,
 		quitChan:       quitChan,
 	}
+
 	return fetcher
 }
 
@@ -78,7 +81,7 @@ func (f *Fetcher) WorkerRun() {
 
 	// We'll fetch each feed one at a time, but we could have done this in parallel
 	for _, feed := range feeds {
-		articles, err := FetchUpdates(feed)
+		articles, err := f.FetchUpdates(feed)
 
 		err = f.ArticlesClient.AddArticles(articles)
 		if err != nil {
@@ -92,9 +95,8 @@ func (f *Fetcher) WorkerRun() {
 	f.Logger.Info("fetching cycle ending", log.Field("duration", fetchDuration.String()))
 }
 
-func FetchUpdates(feed feedmgmt.Feed) (articles artmgmt.Articles, err error) {
-	fp := gofeed.NewParser()
-	feedResult, err := fp.ParseURL(feed.URL)
+func (f *Fetcher) FetchUpdates(feed feedmgmt.Feed) (articles artmgmt.Articles, err error) {
+	feedResult, err := f.RSSParser.ParseURL(feed.URL)
 	if err != nil {
 		return articles, err
 	}

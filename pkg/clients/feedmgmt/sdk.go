@@ -17,8 +17,8 @@ type Client struct {
 	baseURL    string
 }
 
-func NewClient(host string, port int, httpClient *http.Client) *Client {
-	c := &Client{httpClient: httpClient, baseURL: fmt.Sprintf("http://%s:%d/api/v1", host, port)}
+func NewClient(serviceURL string, httpClient *http.Client) *Client {
+	c := &Client{httpClient: httpClient, baseURL: fmt.Sprintf("%s/api/v1", serviceURL)}
 	return c
 }
 

@@ -43,6 +43,11 @@ coverage-report: ## Run the tests of the project and show line by line coverage 
 	@go tool cover -html=coverage.txt
 
 
+.PHONY: gen-mocks
+gen-mocks: ## Run mockery
+	@mockery --recursive --name='(FeedsClient|ArticlesClient)'
+
+
 .PHONY: escape-analysis
 escape-analysis: ## Run Escape Analysis
 	@go build -gcflags "-m=2" ./...

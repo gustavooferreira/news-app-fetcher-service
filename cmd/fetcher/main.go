@@ -41,8 +41,10 @@ func mainLogic() int {
 		Timeout: time.Second * time.Duration(config.Options.HTTPClientTimeout),
 	}
 
-	feedClient := feedmgmt.NewClient(config.FeedsMgmtService.Host, config.FeedsMgmtService.Port, httpClient)
-	articleClient := artmgmt.NewClient(config.ArticlesMgmtService.Host, config.FeedsMgmtService.Port, httpClient)
+	feedsServiceURL := fmt.Sprintf("http://%s:%d", config.FeedsMgmtService.Host, config.FeedsMgmtService.Port)
+	feedClient := feedmgmt.NewClient(feedsServiceURL, httpClient)
+	articlesServiceURL := fmt.Sprintf("http://%s:%d", config.ArticlesMgmtService.Host, config.ArticlesMgmtService.Port)
+	articleClient := artmgmt.NewClient(articlesServiceURL, httpClient)
 
 	// Setup fetcher
 	fetcher := core.NewFetcher(logger, feedClient, articleClient, config.Options.CyclePeriod)
